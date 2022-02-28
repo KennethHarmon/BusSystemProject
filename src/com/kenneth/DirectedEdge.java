@@ -12,15 +12,15 @@ public class DirectedEdge {
         this.weight = weight;
     }
 
-    public double getWeight() {
+    public double weight() {
         return weight;
     }
 
-    public int getFrom() {
+    public int from() {
         return from;
     }
 
-    public int getTo() {
+    public int to() {
         return to;
     }
 

@@ -1,5 +1,8 @@
 package com.kenneth;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.Scanner;
 
 public class Main {
@@ -10,6 +13,12 @@ public class Main {
     }
 
     private static void loadGraph() {
+        try {
+            BufferedReader br =  new BufferedReader(new FileReader("resources/stop_times.txt"));
+            //EdgeWeightedDigraph graph = new EdgeWeightedDigraph(br);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
     }
 

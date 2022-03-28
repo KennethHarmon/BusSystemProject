@@ -1,11 +1,15 @@
 package com.kenneth;
+import com.kenneth.Bag;
+import com.kenneth.DirectedEdge;
 
-import java.io.InputStream;
-import java.util.HashMap;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.Buffer;
 
 public class EdgeWeightedDigraph {
 
-    private final int V; //Number of vertices
+    private int V; //Number of vertices
     private int E; //Number of Edges
     private Bag<DirectedEdge>[] adj;
 
@@ -16,9 +20,47 @@ public class EdgeWeightedDigraph {
     }
 
     //Construct from In
-    public EdgeWeightedDigraph(InputStream in) {
-        this.V = 0;
-        this.E = 0;
+    @SuppressWarnings("unchecked")
+    public EdgeWeightedDigraph(String stopsFile, String transfersFile) throws IOException {
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(stopsFile));
+            String line;
+            String nextLine;
+            boolean hasVertices = false;
+            boolean hasEdges = false;
+            boolean skippedHeadings = false;
+            adj = (Bag<DirectedEdge>[]) new Bag[13500];
+            this.V = 13500;
+            double weight = 1;
+            while ((line = in.readLine()) != null) {
+                if (skippedHeadings) {
+                    if ((nextLine = in.readLine()) != null) {
+                        String[] fromEdgeData = line.split(",");
+                        String[] toEdgeData = nextLine.split(",");
+                        int fromTripID = Integer.parseInt(fromEdgeData[0]);
+                        int toTripID = Integer.parseInt(toEdgeData[0]);
+                        if (fromTripID == toTripID) {
+                            int from = Integer.parseInt(fromEdgeData[3]);
+                            int to = Integer.parseInt(toEdgeData[3]);
+                            DirectedEdge edge = new DirectedEdge(from, to, weight);
+                            if (adj[from] == null) {
+                                Bag<DirectedEdge> edges = new Bag<DirectedEdge>();
+                                edges.add(edge);
+                                adj[from] = edges;
+                            } else {
+                                adj[from].add(edge);
+                            }
+                            this.E++;
+                        }
+                    }
+                }
+                else {
+                    skippedHeadings = true;
+                }
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
     }
 
     //Number of vertices
@@ -29,7 +71,6 @@ public class EdgeWeightedDigraph {
 
     //Add edge e to this digraph
     private void addEdge(DirectedEdge e) {
-
     }
 
     //Edges pointing from v
@@ -37,5 +78,14 @@ public class EdgeWeightedDigraph {
         return adj[v];
     }
 
-
+    @Override
+    public String toString() {
+        StringBuilder output = new StringBuilder();
+        for (Iterable<DirectedEdge> vertex:adj) {
+            for (DirectedEdge edge: vertex) {
+                output.append(edge.toString()).append("\n");
+            }
+        }
+        return output.toString();
+    }
 }

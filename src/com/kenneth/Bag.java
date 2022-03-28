@@ -1,6 +1,5 @@
 //Note: the code for this Bag implementation was taken and adapted from Algorithms: Robert Sedgewick and Kevin Wayne
 package com.kenneth;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -39,6 +38,19 @@ public class Bag<Item> implements Iterable<Item> {
      */
     public int size() {
         return n;
+    }
+
+    /**
+     * Adds the item to this bag.
+     *
+     * @param  item the item to add to this bag
+     */
+    public void add(Item item) {
+        Node<Item> oldfirst = first;
+        first = new Node<Item>();
+        first.item = item;
+        first.next = oldfirst;
+        n++;
     }
 
     /**

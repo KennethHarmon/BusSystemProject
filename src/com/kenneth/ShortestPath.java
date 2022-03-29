@@ -2,6 +2,8 @@ package com.kenneth;
 import com.kenneth.DirectedEdge;
 import com.kenneth.EdgeWeightedDigraph;
 
+import javax.management.QueryEval;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Stack;
@@ -88,6 +90,7 @@ public class ShortestPath {
             path.push(e);
             e = edgeTo[e.from()];
         }
+        Collections.reverse(path);
         return path;
     }
 

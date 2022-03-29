@@ -22,14 +22,13 @@ public class EdgeWeightedDigraph {
     //Construct from In
     @SuppressWarnings("unchecked")
     public EdgeWeightedDigraph(String stopsFile, String transfersFile) throws IOException {
+        //Reading stops file
         try {
             BufferedReader in = new BufferedReader(new FileReader(stopsFile));
             String line;
             String nextLine;
-            boolean hasVertices = false;
-            boolean hasEdges = false;
             boolean skippedHeadings = false;
-            adj = (Bag<DirectedEdge>[]) new Bag[13500];
+            this.adj = (Bag<DirectedEdge>[]) new Bag[13500];
             this.V = 13500;
             double weight = 1;
             while ((line = in.readLine()) != null) {
@@ -53,6 +52,40 @@ public class EdgeWeightedDigraph {
                             this.E++;
                         }
                     }
+                }
+                else {
+                    skippedHeadings = true;
+                }
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
+
+        //Reading transfers file
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(transfersFile));
+            String line;
+            boolean skippedHeadings = false;
+            double weight;
+            while ((line = in.readLine()) != null) {
+                if (skippedHeadings) {
+                    String[] transferData = line.split(",");
+                    int from = Integer.parseInt(transferData[0]);
+                    int to = Integer.parseInt(transferData[1]);
+                    int transferType = Integer.parseInt(transferData[2]);
+                    weight = 2;
+                    if (transferType == 2) {
+                        weight = Float.parseFloat(transferData[3]) / 100;
+                    }
+                    DirectedEdge edge = new DirectedEdge(from, to, weight);
+                    if (adj[from] == null) {
+                        Bag<DirectedEdge> edges = new Bag<DirectedEdge>();
+                        edges.add(edge);
+                        adj[from] = edges;
+                    } else {
+                        adj[from].add(edge);
+                    }
+                    this.E++;
                 }
                 else {
                     skippedHeadings = true;

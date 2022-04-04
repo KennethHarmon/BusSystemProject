@@ -3,6 +3,11 @@ package com.kenneth;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.DateTimeException;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
 import java.util.HashMap;
 
@@ -11,11 +16,13 @@ public class Main {
     private static EdgeWeightedDigraph graph;
     private static TST<Integer> tst;
     private static HashMap<String, Stop> stopMap;
+    private static HashMap<String, ArrayList<StopTime>> stopTimes;
 
     public static void main(String[] args) throws IOException {
         graph = new EdgeWeightedDigraph("resources/stop_times.txt", "resources/transfers.txt");
         tst = new TST<Integer>();
         stopMap = new HashMap<String, Stop>();
+        stopTimes = loadStopTimes();
         loadTST();
         startInterface();
     }
@@ -24,7 +31,6 @@ public class Main {
         boolean hasQuit = false;
         Scanner input = new Scanner(System.in);
         System.out.println("Hello! Welcome to the bus app!");
-        System.out.println(String.format("Graph has %s vertices and %s edges.", graph.V(), graph.E()));
         while (!hasQuit) {
             System.out.println("Which option would you like (or press q to quit): ");
             System.out.println("1: Find a path between two stops of your choosing.");
@@ -43,6 +49,7 @@ public class Main {
                         break;
                     case 3:
                         System.out.println("You chose option 3");
+                        searchByArrivalTime(input);
                         break;
                     default:
                         System.out.println("Hmm.. that's not one of the options, please choose again.");
@@ -72,11 +79,21 @@ public class Main {
                 System.out.println("Where would you like to go: ");
                 if (input.hasNextInt()) {
                     to = input.nextInt();
-                    inputRecieved = true;
-                    ShortestPath shortestPath = new ShortestPath(graph, from);
-                    System.out.println("The shortest path is :");
-                    Iterable<DirectedEdge> currentPath = shortestPath.pathTo(to);
-                    System.out.println(currentPath);
+                    if (checkGraphInputs(from, to)) {
+                        inputRecieved = true;
+                        ShortestPath shortestPath = new ShortestPath(graph, from);
+                        if (shortestPath.hasPathTo(to)) {
+                            System.out.println("The shortest path is :");
+                            Iterable<DirectedEdge> currentPath = shortestPath.pathTo(to);
+                            System.out.println(currentPath);
+                        }
+                        else {
+                            System.out.println("Sorry, there doesn't seem to be a path between those two stops.");
+                        }
+                    }
+                    else {
+                        System.out.println("Your stops must be greater than 0 and be a valid stop number.");
+                    }
                 }
                 else if (input.hasNext()) {
                     System.out.println("Error, please enter a valid stop number!");
@@ -86,6 +103,10 @@ public class Main {
                 System.out.println("Error, please enter a valid stop number!");
             }
         }
+    }
+
+    private static boolean checkGraphInputs(int from, int to) {
+        return (from < graph.V() && from > 0 && to < graph.V() && to > 0);
     }
 
     private static void loadTST() {
@@ -143,7 +164,7 @@ public class Main {
         System.out.println("Please enter your search: ");
         if (input.hasNext()) {
             String search = input.next();
-            Iterable<String> results = tst.keysWithPrefix(search);
+            Iterable<String> results = tst.keysWithPrefix(search.toUpperCase());
             if (!results.iterator().hasNext()) {
                 System.out.println("Sorry, no results were found for your search.");
                 return;
@@ -156,13 +177,79 @@ public class Main {
         }
     }
 
-    private static void searchByArrivalTime() {
+    private static HashMap<String, ArrayList<StopTime>> loadStopTimes() {
+        //Reading stops file
+        HashMap<String, ArrayList<StopTime>> stopTimesList = new HashMap<String, ArrayList<StopTime>>();
+        try {
+            BufferedReader in = new BufferedReader(new FileReader("resources/stop_times.txt"));
+            String line;
+            boolean skippedHeadings = false;
+            while ((line = in.readLine()) != null) {
+                if (skippedHeadings) {
+                    String[] stopData = line.split(",");
+                    StopTime currentStopTime = new StopTime(stopData);
+                    ArrayList<StopTime> stopTimes;
+                    String key = stopData[1].trim();
+                    try {
+                        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:m:s");
+                        timeFormatter.parse(key);
+                        try {
+                            Integer.parseInt(key.substring(0, 2));
+                        }
+                        catch (NumberFormatException ignored) {
+                            key = "0" + key;
+                        }
+                        stopTimes = stopTimesList.get(stopData[1]);
+                        if (stopTimes == null) {
+                            stopTimes = new ArrayList<StopTime>();
+                        }
+                        stopTimes.add(currentStopTime);
+                        stopTimesList.put(key, stopTimes);
+                    }
+                    catch (DateTimeException ignored) {};
+                }
+                else {
+                    skippedHeadings = true;
+                }
+            }
+            return stopTimesList;
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return stopTimesList;
+    }
 
+    private static void searchByArrivalTime(Scanner input) {
+        System.out.println("What time would you like to search for, please input it in the format HH:MM:SS");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:m:s");
+        String search;
+        boolean validInput = false;
+        while ((search = input.next()) != null && !validInput) {
+            try {
+                timeFormatter.parse(search);
+                validInput = true;
+                ArrayList<StopTime> results = stopTimes.get(search);
+                if (results == null) {
+                    System.out.println("Sorry, no results were found for your search.");
+                    return;
+                }
+                else {
+                    Collections.sort(results);
+                    System.out.println("These are the stops that were found (Sorted by TripID): ");
+                    for (StopTime result : results) {
+                        System.out.println(result);
+                    }
+                    break;
+                }
+            } catch (DateTimeParseException | NullPointerException e) {
+                System.out.println("Sorry, your input seems to be formatted wrong. Please try again.");
+                System.out.println("Make sure your input is in the format HH:MM:SS");
+            }
+        }
     }
 }
 
 class Stop{
-    //stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station
     public int stopID;
     public int stopCode;
     public String stopName;
@@ -187,9 +274,22 @@ class Stop{
         this.parentStation = "";
     }
 
+    public Stop(String[] stopData) {
+        this.stopID = Integer.parseInt(stopData[0]);
+        this.stopCode = Integer.parseInt(stopData[1]);
+        this.stopName = stopData[2];
+        this.desc = stopData[3];
+        this.lat = stopData[4];
+        this.lon = stopData[5];
+        this.zoneID = stopData[6];
+        this.url = stopData[7];
+        this.locationType = stopData[8];
+        this.parentStation = "";
+    }
+
     @Override
     public String toString() {
-        return "Stop{" +
+        return  stopName + " : " +
                 "stopID=" + stopID +
                 ", stopCode=" + stopCode +
                 ", desc='" + desc + '\'' +
@@ -198,7 +298,62 @@ class Stop{
                 ", zoneID='" + zoneID + '\'' +
                 ", url='" + url + '\'' +
                 ", locationType='" + locationType + '\'' +
-                ", parentStation='" + parentStation + '\'' +
+                ", parentStation='" + parentStation + '\'';
+    }
+}
+
+class StopTime implements Comparable<StopTime>{
+    public int tripID;
+    public String arrivalTime;
+    public String departureTime;
+    public String stopID;
+    public String stopSequence;
+    public String stopHeadsign;
+    public String pickupType;
+    public String dropoffType;
+    public String shapeDistTravelled;
+
+    public StopTime(int tripID, String arrivalTime, String departureTime, String stopID, String stopSequence, String stopHeadsign, String pickupType, String dropoffType, String shapeDistTravelled) {
+        this.tripID = tripID;
+        this.arrivalTime = arrivalTime;
+        this.departureTime = departureTime;
+        this.stopID = stopID;
+        this.stopSequence = stopSequence;
+        this.stopHeadsign = stopHeadsign;
+        this.pickupType = pickupType;
+        this.dropoffType = dropoffType;
+        this.shapeDistTravelled = shapeDistTravelled;
+    }
+
+    public StopTime(String[] stopTimeData) {
+        this.tripID = Integer.parseInt(stopTimeData[0]);
+        this.arrivalTime = stopTimeData[1];
+        this.departureTime = stopTimeData[2];
+        this.stopID = stopTimeData[3];
+        this.stopSequence = stopTimeData[4];
+        this.stopHeadsign = "";
+        this.pickupType = stopTimeData[5];
+        this.dropoffType = stopTimeData[6];
+        this.shapeDistTravelled = stopTimeData[7];
+    }
+
+    @Override
+    public int compareTo(StopTime o) {
+        return this.tripID - o.tripID;
+    }
+
+    @Override
+    public String toString() {
+        return "Trip {" +
+                "tripID=" + tripID +
+                ", arrivalTime='" + arrivalTime + '\'' +
+                ", departureTime='" + departureTime + '\'' +
+                ", stopID='" + stopID + '\'' +
+                ", stopSequence='" + stopSequence + '\'' +
+                ", stopHeadsign='" + stopHeadsign + '\'' +
+                ", pickupType='" + pickupType + '\'' +
+                ", dropoffType='" + dropoffType + '\'' +
+                ", shapeDistTravelled='" + shapeDistTravelled + '\'' +
                 '}';
     }
 }

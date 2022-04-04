@@ -15,13 +15,13 @@ public class Main {
 
     private static EdgeWeightedDigraph graph;
     private static TST<Integer> tst;
-    private static HashMap<String, Stop> stopMap;
+    private static HashMap<String, String> stopMap;
     private static HashMap<String, ArrayList<StopTime>> stopTimes;
 
     public static void main(String[] args) throws IOException {
         graph = new EdgeWeightedDigraph("resources/stop_times.txt", "resources/transfers.txt");
         tst = new TST<Integer>();
-        stopMap = new HashMap<String, Stop>();
+        stopMap = new HashMap<String, String>();
         stopTimes = loadStopTimes();
         loadTST();
         startInterface();
@@ -132,7 +132,7 @@ public class Main {
                     String url = stopData[7];
                     String locationType = stopData[8];
                     //String parentStation = stopData[9];
-                    Stop currentStop = new Stop(stopID, stopCode, stopName, desc, lat, lon, zoneID, url, locationType);
+                    String currentStop;
                     String directionPrefix = stopName.substring(0,2);
                     String flagstopPrefix = stopName.substring(0,8);
                     if (flagstopPrefix.equalsIgnoreCase("flagstop")) {
@@ -147,6 +147,16 @@ public class Main {
                         newName.append(stopName);
                     }
                     //System.out.println(newName);
+                     currentStop = newName + " : " +
+                                "stopID=" + stopID +
+                                ", stopCode=" + stopCode +
+                                ", desc='" + desc + '\'' +
+                                ", lat='" + lat + '\'' +
+                                ", lon='" + lon + '\'' +
+                                ", zoneID='" + zoneID + '\'' +
+                                ", url='" + url + '\'' +
+                                ", locationType='" + locationType + '\'' +
+                                ", parentStation='" + "" + '\'';
                     stopMap.put(newName.toString(), currentStop);
                     tst.put(newName.toString(), counter);
                     counter++;
@@ -171,7 +181,7 @@ public class Main {
             }
             System.out.println("These are the stops that were found: ");
             for (String result : results) {
-                Stop stop = stopMap.get(result);
+                String stop = stopMap.get(result);
                 System.out.println(stop);
             }
         }
@@ -246,59 +256,6 @@ public class Main {
                 System.out.println("Make sure your input is in the format HH:MM:SS");
             }
         }
-    }
-}
-
-class Stop{
-    public int stopID;
-    public int stopCode;
-    public String stopName;
-    public String desc;
-    public String lat;
-    public String lon;
-    public String zoneID;
-    public String url;
-    public String locationType;
-    public String parentStation;
-
-    public Stop(int stopID, int stopCode, String stopName, String desc, String lat, String lon, String zoneID, String url, String locationType) {
-        this.stopID = stopID;
-        this.stopCode = stopCode;
-        this.stopName = stopName;
-        this.desc = desc;
-        this.lat = lat;
-        this.lon = lon;
-        this.zoneID = zoneID;
-        this.url = url;
-        this.locationType = locationType;
-        this.parentStation = "";
-    }
-
-    public Stop(String[] stopData) {
-        this.stopID = Integer.parseInt(stopData[0]);
-        this.stopCode = Integer.parseInt(stopData[1]);
-        this.stopName = stopData[2];
-        this.desc = stopData[3];
-        this.lat = stopData[4];
-        this.lon = stopData[5];
-        this.zoneID = stopData[6];
-        this.url = stopData[7];
-        this.locationType = stopData[8];
-        this.parentStation = "";
-    }
-
-    @Override
-    public String toString() {
-        return  stopName + " : " +
-                "stopID=" + stopID +
-                ", stopCode=" + stopCode +
-                ", desc='" + desc + '\'' +
-                ", lat='" + lat + '\'' +
-                ", lon='" + lon + '\'' +
-                ", zoneID='" + zoneID + '\'' +
-                ", url='" + url + '\'' +
-                ", locationType='" + locationType + '\'' +
-                ", parentStation='" + parentStation + '\'';
     }
 }
 

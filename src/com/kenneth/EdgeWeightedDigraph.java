@@ -107,6 +107,14 @@ public class EdgeWeightedDigraph {
     private void addEdge(DirectedEdge e) {
     }
 
+    public boolean isValidStop(int stop) {
+        if (stop < adj.length -1) {
+            return adj[stop] != null;
+        }
+        else {
+            return false;
+        }
+    }
     //Edges pointing from v
     public Iterable<DirectedEdge> adj(int v) {
         return adj[v];

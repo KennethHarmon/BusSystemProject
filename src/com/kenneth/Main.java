@@ -19,11 +19,17 @@ public class Main {
     private static HashMap<String, ArrayList<StopTime>> stopTimes;
 
     public static void main(String[] args) throws IOException {
+        System.out.println("Loading graph....");
         graph = new EdgeWeightedDigraph("resources/stop_times.txt", "resources/transfers.txt");
-        tst = new TST<Integer>();
+        System.out.println("Done!");
+        System.out.println("Loading Stop Time Search....");
         stopMap = new HashMap<String, String>();
         stopTimes = loadStopTimes();
+        System.out.println("Done!");
+        System.out.println("Loading TST....");
+        tst = new TST<Integer>();
         loadTST();
+        System.out.println("Done!");
         startInterface();
     }
 
@@ -201,7 +207,7 @@ public class Main {
                     ArrayList<StopTime> stopTimes;
                     String key = stopData[1].trim();
                     try {
-                        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:m:s");
+                        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:m:s");
                         timeFormatter.parse(key);
                         try {
                             Integer.parseInt(key.substring(0, 2));
@@ -237,6 +243,13 @@ public class Main {
         while ((search = input.next()) != null && !validInput) {
             try {
                 timeFormatter.parse(search);
+                try {
+                    Integer.parseInt(search.substring(0, 2));
+                }
+                catch (NumberFormatException ignored) {
+                    search = "0" + search;
+                }
+                System.out.println(search);
                 validInput = true;
                 ArrayList<StopTime> results = stopTimes.get(search);
                 if (results == null) {
